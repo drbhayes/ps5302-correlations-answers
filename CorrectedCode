@@ -1,0 +1,134 @@
+#Install packages
+install.packages("tidyverse")
+install.packages("correlation")
+install.packages("gridExtra")
+install.packages("ppcor")
+install.packages("cocor")
+library(tidyverse)
+library(correlation)
+library(gridExtra)
+library(ppcor)
+library(cocor)
+
+#Viewing data
+correlation_data <- read_csv("CorrelationsData.csv")
+view(correlation_data)
+summary(correlation_data)
+
+#Cleaning - defining variables, calculating means.
+correlation_data$CRSmean <- rowMeans(correlation_data[, 3:7], na.rm = TRUE)
+correlation_data$MFQmean <- rowMeans(correlation_data[, 8:37], na.rm = TRUE)
+correlation_data$SMDSmean <- rowMeans(correlation_data[, 38:49], na.rm = TRUE)
+correlation_data$Age <- as.numeric(correlation_data$Age)
+correlation_data$Gender <- as.factor(correlation_data$Gender)
+correlation_data$CRSmean <- as.numeric(correlation_data$CRSmean)
+correlation_data$MFQmean <- as.numeric(correlation_data$MFQmean)
+correlation_data$SMDSmean <- as.numeric(correlation_data$SMDSmean)
+
+#Means
+mean_age <- mean(correlation_data$Age)
+print(mean_age)
+
+mean_CRS <- mean(correlation_data$CRSmean)
+print(mean_CRS)
+
+mean_MFQ <- mean(correlation_data$MFQmean)
+print(mean_MFQ)
+
+mean_SMDS <- mean(correlation_data$SMDSmean)
+print(mean_SMDS)
+
+#Scatterplots
+plot1 <- ggplot(correlation_data, aes(x = Age, y = SMDSmean)) +
+  geom_point() +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  theme_classic()
+
+plot2 <- ggplot(correlation_data, aes(x = CRSmean, y = SMDSmean)) +
+  geom_point() +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  theme_classic()
+
+plot3 <- ggplot(correlation_data, aes(x = MFQmean, y = SMDSmean)) +
+  geom_point() +
+  geom_smooth(method = "lm",
+              se = FALSE) +
+  theme_classic()
+
+grid.arrange(plot1, plot2, plot3, nrow = 2, ncol = 2) 
+
+#Pearsons Correlations
+correlation_data %>%
+  dplyr::select(Age, CRSmean, MFQmean, SMDSmean) %>%
+  correlation(p_adjust = "none")
+
+#Partial Correlations
+pcor.test(correlation_data$CRSmean, correlation_data$MFQmean,
+          correlation_data$Age,
+          method = "pearson")
+
+pcor.test(correlation_data$CRSmean, correlation_data$SMDSmean,
+          correlation_data$Age,
+          method = "pearson")
+
+pcor.test(correlation_data$MFQmean, correlation_data$SMDSmean,
+          correlation_data$Age,
+          method = "pearson")
+
+#Comparing Correlations
+male <- correlation_data[correlation_data$Gender == "0", ]
+female <- correlation_data[correlation_data$Gender == "1", ]
+
+cor.test(male$MFQmean, male$CRSmean,
+         method = "pearson")
+cor.test(female$MFQmean, female$CRSmean,
+         method = "pearson")
+cor.test(female$MFQmean, female$SMDSmean,
+         method = "pearson")
+cor.test(female$SMDSmean, female$CRSmean,
+         method = "pearson")
+
+cocor.indep.groups(0.5999553, 0.6081677, 92, 100)
+
+plot_cc <- ggplot(correlation_data, aes(x = CRSmean, y = MFQmean, colour = Gender)) +
+  geom_point(aes(shape = Gender)) +
+  geom_smooth(aes(linetype = Gender), method = "lm", se = FALSE) +
+  labs(title = "Religiosity vs Morality by Gender",
+       x = "Religiosity",
+       y = "Morality") +
+  theme_classic() +
+  scale_color_manual(values = c("0" = "grey", "1" = "black ")) +
+  scale_linetype_manual(values = c("0" = "solid", "1" = "dashed")) +
+  scale_shape_manual(values = c("0" = 16, "1" = 3))
+print(plot_cc)
+
+#For advanced students to code themselves.
+cocor.indep.groups(-0.01356718, 0.6081677, 100, 100)
+
+plot_cc <- ggplot(correlation_data, aes(x = CRSmean, y = SMDSmean, colour = Gender)) +
+  geom_point(aes(shape = Gender)) +
+  geom_smooth(aes(linetype = Gender), method = "lm", se = FALSE) +
+  labs(title = "Religiosity vs Fake News by Gender",
+       x = "Religiosity",
+       y = "Fake News") +
+  theme_classic() +
+  scale_color_manual(values = c("0" = "grey", "1" = "black ")) +
+  scale_linetype_manual(values = c("0" = "solid", "1" = "dashed")) +
+  scale_shape_manual(values = c("0" = 16, "1" = 3))
+print(plot_cc)
+
+cocor.indep.groups(0.6081677, 0.6309004, 100, 100)
+
+plot_cc <- ggplot(correlation_data, aes(x = SMDSmean, y = SMDSmean, colour = Gender)) +
+  geom_point(aes(shape = Gender)) +
+  geom_smooth(aes(linetype = Gender), method = "lm", se = FALSE) +
+  labs(title = "Fake News vs Morality by Gender",
+       x = "Fake News",
+       y = "Morality") +
+  theme_classic() +
+  scale_color_manual(values = c("0" = "grey", "1" = "black ")) +
+  scale_linetype_manual(values = c("0" = "solid", "1" = "dashed")) +
+  scale_shape_manual(values = c("0" = 16, "1" = 3))
+print(plot_cc)
