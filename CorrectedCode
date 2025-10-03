@@ -4,11 +4,13 @@ install.packages("correlation")
 install.packages("gridExtra")
 install.packages("ppcor")
 install.packages("cocor")
+install.packages("ggplot2")
 library(tidyverse)
 library(correlation)
 library(gridExtra)
 library(ppcor)
 library(cocor)
+library(ggplot2) 
 
 #Viewing data
 correlation_data <- read_csv("CorrelationsData.csv")
